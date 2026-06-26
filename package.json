@@ -1,0 +1,8 @@
+{
+  "name": "det-saleshelper",
+  "version": "1.0.0",
+  "description": "DET SalesHelper – Übersichtsseite für Sales-Tools",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

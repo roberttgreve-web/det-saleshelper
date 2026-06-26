@@ -28,7 +28,8 @@
 
     /* ── HEADER ── */
     header {
-      background: #181818;
+      background: white;
+      border-bottom: 1px solid #eaeaea;
       padding: 0 48px;
       height: 60px;
       display: flex;
@@ -38,12 +39,12 @@
     header img { height: 28px; }
     header .divider {
       width: 1px; height: 20px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(24,24,24,0.15);
     }
     header .app-name {
       font-size: 15px;
       font-weight: 500;
-      color: white;
+      color: var(--dark);
       letter-spacing: 0.01em;
     }
 
@@ -90,12 +91,12 @@
     }
 
     .tool-card {
-      background: white;
-      border: 1px solid #e8e8e8;
+      background: var(--yellow);
+      border: 1px solid rgba(0,0,0,0.06);
       border-radius: 20px;
       padding: 32px;
       text-decoration: none;
-      color: inherit;
+      color: var(--dark);
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -103,21 +104,10 @@
       position: relative;
       overflow: hidden;
     }
-    .tool-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--brand);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
     .tool-card:hover:not(.coming-soon) {
-      border-color: var(--brand);
-      box-shadow: 0 8px 32px rgba(0,175,214,0.12);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
       transform: translateY(-2px);
     }
-    .tool-card:hover:not(.coming-soon)::before { opacity: 1; }
     .tool-card.coming-soon {
       opacity: 0.55;
       cursor: default;
@@ -287,7 +277,8 @@
 
 <main>
   <div class="page-eyebrow">Deine Tools</div>
-  <h1 class="page-title">Alles, was du für<br><strong>den Verkaufsalltag brauchst.</strong></h1>
+  <h1 class="page-title">Erfolgreiche Sales für<br><strong>DEIN ERSTER TAG.</strong></h1>
+  <p style="font-size:17px;color:rgba(24,24,24,0.6);margin-top:-32px;margin-bottom:48px;">Hier sind deine Tools:</p>
 
   <!-- ── TOOLS ── -->
   <section>
@@ -300,7 +291,7 @@
           <span class="status-badge status-live">Live</span>
         </div>
         <div class="tool-name">Schulcard-Generator</div>
-        <div class="tool-desc">KI-gestützte Schulcards für Ausbildungsberufe und Duale Studiengänge – inklusive HTML-Export.</div>
+        <div class="tool-desc">Schulcard-Dummies zur Vorbereitung von Demos und Kundenterminen selber erstellen.</div>
         <div class="tool-link-hint">Zum Tool <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
       </a>
 
@@ -310,7 +301,7 @@
           <span class="status-badge status-live">Live</span>
         </div>
         <div class="tool-name">Sales-Mail-Generator</div>
-        <div class="tool-desc">Personalisierte Verkaufsmails per KI – mit Anrede, Formaten und KI-Anpassung per Freitext.</div>
+        <div class="tool-desc">E-Mails schnell und einfach zusammenstellen.</div>
         <div class="tool-link-hint">Zum Tool <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
       </a>
 
@@ -386,6 +377,9 @@
       : item.title || '–';
 
     const hasHtml = !!item.html;
+    const openBtn = hasHtml
+      ? `<button class="item-btn primary" onclick="openHtml(this)" data-html="${encodeURIComponent(item.html)}">Öffnen</button>`
+      : `<a href="${item._url}" target="_blank" class="item-btn primary">Öffnen</a>`;
 
     return `
       <div class="item-card">
@@ -393,11 +387,17 @@
         <div class="item-title">${title}</div>
         <div class="item-meta">${formatDate(item.createdAt)}</div>
         <div class="item-actions">
-          <a href="${item._url}" target="_blank" class="item-btn primary">Öffnen</a>
+          ${openBtn}
           ${hasHtml ? `<button class="item-btn" onclick="downloadHtml(this)" data-html="${encodeURIComponent(item.html)}" data-name="${title}">HTML</button>` : ''}
         </div>
       </div>
     `;
+  }
+
+  function openHtml(btn) {
+    const html = decodeURIComponent(btn.dataset.html);
+    const blob = new Blob([html], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
   }
 
   function downloadHtml(btn) {

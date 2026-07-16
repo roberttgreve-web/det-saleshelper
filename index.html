@@ -269,6 +269,40 @@
       border-top: 1px solid #eaeaea;
     }
     footer a { color: var(--brand); text-decoration: none; }
+
+    /* ── PASSWORT-FAB + MODAL ── */
+    .pw-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 500;
+      background: var(--dark); color: #fff; border: none; border-radius: 100px;
+      padding: 12px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25); font-family: 'Roboto', sans-serif;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .pw-fab:hover { background: #2a2a4e; }
+    .pw-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 600; align-items: center; justify-content: center; padding: 24px;
+    }
+    .pw-modal-overlay.show { display: flex; }
+    .pw-modal {
+      background: #fff; border-radius: 16px; max-width: 640px; width: 100%;
+      max-height: 80vh; display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .pw-modal-header {
+      padding: 18px 22px; border-bottom: 1px solid #eaeaea; display: flex;
+      align-items: center; justify-content: space-between; font-weight: 700; font-size: 15px;
+    }
+    .pw-modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: #999; }
+    .pw-modal-body { padding: 16px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .pw-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 14px; border: 1px solid #e8e8e8; border-radius: 10px;
+    }
+    .pw-row-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .pw-row-company { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .pw-row-url { font-size: 11px; color: var(--brand); text-decoration: none; word-break: break-all; }
+    .pw-row-pw { font-size: 12px; color: #555; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -328,14 +362,15 @@
         <div class="tool-link-hint">Zum Tool <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
       </a>
 
-      <div class="tool-card coming-soon">
+      <a href="https://praesentations-generator.vercel.app" target="_blank" class="tool-card">
         <div class="tool-card-top">
           <div class="tool-icon">📊</div>
-          <span class="status-badge status-soon">Coming soon</span>
+          <span class="status-badge status-live">Live</span>
         </div>
         <div class="tool-name">Präsentation erstellen</div>
         <div class="tool-desc">Individuelle Kundenpräsentationen – mit Unternehmensname, Branche und Ansprechpartner personalisiert.</div>
-      </div>
+        <div class="tool-link-hint">Zum Tool <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
+      </a>
 
       <div class="tool-card coming-soon">
         <div class="tool-card-top">
@@ -486,6 +521,20 @@
   DEIN ERSTER TAG &nbsp;·&nbsp; <a href="mailto:robert.greve@deinerstertag.de">robert.greve@deinerstertag.de</a>
 </footer>
 
+<button class="pw-fab" onclick="openPasswordModal()">🔑 Passwörter</button>
+
+<div id="pwModal" class="pw-modal-overlay" onclick="if(event.target===this) closePasswordModal()">
+  <div class="pw-modal">
+    <div class="pw-modal-header">
+      <span>Live-Präsentationen &amp; Passwörter</span>
+      <button class="pw-modal-close" onclick="closePasswordModal()">✕</button>
+    </div>
+    <div class="pw-modal-body" id="pwList">
+      <div class="loading-row">Wird geladen…</div>
+    </div>
+  </div>
+</div>
+
 <script>
   function formatDate(iso) {
     if (!iso) return '';
@@ -564,6 +613,45 @@
   }
 
   load();
+
+  async function openPasswordModal() {
+    document.getElementById('pwModal').classList.add('show');
+    const list = document.getElementById('pwList');
+    list.innerHTML = '<div class="loading-row">Wird geladen…</div>';
+    try {
+      const res = await fetch('/api/dashboard');
+      const { items } = await res.json();
+      const pwItems = items.filter(i => i._type === 'praesentation' && i.password);
+      list.innerHTML = pwItems.length
+        ? pwItems.map(renderPwRow).join('')
+        : '<div class="empty-state"><strong>Noch keine Live-Präsentationen</strong>Sobald im Präsentations-Generator auf "Live veröffentlichen" geklickt wird, erscheint der Eintrag hier.</div>';
+    } catch (e) {
+      list.innerHTML = '<div class="empty-state"><strong>Fehler beim Laden</strong></div>';
+    }
+  }
+  function closePasswordModal() {
+    document.getElementById('pwModal').classList.remove('show');
+  }
+  function renderPwRow(item) {
+    const block = `${item.url}\nPasswort: ${item.password}`;
+    return `
+      <div class="pw-row">
+        <div class="pw-row-info">
+          <span class="pw-row-company">${item.companyName || '–'}</span>
+          <a href="${item.url}" target="_blank" class="pw-row-url">${item.url}</a>
+          <span class="pw-row-pw">Passwort: ${item.password}</span>
+        </div>
+        <button class="item-btn primary" onclick="copyPwBlock(this)" data-block="${encodeURIComponent(block)}">📋 Kopieren</button>
+      </div>
+    `;
+  }
+  function copyPwBlock(btn) {
+    const text = decodeURIComponent(btn.dataset.block);
+    navigator.clipboard.writeText(text).catch(() => {});
+    const orig = btn.textContent;
+    btn.textContent = '✓ Kopiert';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }
 </script>
 </body>
 </html>
